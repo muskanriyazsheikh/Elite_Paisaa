@@ -21,24 +21,17 @@ import SignupPage from './pages/Home/SignupPage';
 import FAQPage from './pages/Home/FAQspage';
 import ApplyNowPage from './pages/ApplyNowPage';
 import LoanEligibility  from './pages/Home/LoanEligibility';
+import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 import { CloudSnow } from 'lucide-react';
-
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
-  return null;
-};
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
+    
     <BrowserRouter>
+      <ScrollToTop />
       <AnimatePresence>
         {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
       </AnimatePresence>
