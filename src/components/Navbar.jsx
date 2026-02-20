@@ -156,23 +156,23 @@ const Navbar = () => {
             </div>
 
             {/* CTA Buttons */}
-<div className="lg:flex items-center gap-3">
+<div className="hidden lg:flex items-center gap-2 xl:gap-3">
   {isAuthenticated && (
     <button 
       onClick={navigateToProfile}
-      className={`flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 ${
-        isScrolled ? 'px-4 py-2 text-sm' : 'px-6 py-3'
+      className={`flex items-center gap-1 xl:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 whitespace-nowrap ${
+        isScrolled ? 'px-3 py-2 text-xs' : 'px-4 py-2 text-sm'
       }`}
     >
-      <User size={18} />
-      Profile
+      <User size={16} />
+      <span className="hidden xl:inline">Profile</span>
     </button>
   )}
 
   <button 
     onClick={() => navigate('/apply')}
-    className={`bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md transition-all duration-300 ${
-      isScrolled ? 'px-6 py-2 text-sm' : 'px-8 py-3'
+    className={`bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md transition-all duration-300 whitespace-nowrap ${
+      isScrolled ? 'px-4 py-2 text-xs' : 'px-6 py-2 text-sm'
     }`}
   >
     Apply Now
@@ -213,9 +213,18 @@ const Navbar = () => {
                     {item.label}
                   </Link>
                 ))}
+                {isAuthenticated && (
+                  <button 
+                    onClick={() => { navigate('/profile'); setIsOpen(false); }}
+                    className="lg:hidden w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md px-6 py-3 flex items-center justify-center gap-2"
+                  >
+                    <User size={18} />
+                    Profile
+                  </button>
+                )}
                 <button 
-                  onClick={() => navigate('/apply')}
-                  className="lg:hidden mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md px-6 py-2"
+                  onClick={() => { navigate('/apply'); setIsOpen(false); }}
+                  className="lg:hidden w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md px-6 py-3"
                 >
                   Apply Now
                 </button>
