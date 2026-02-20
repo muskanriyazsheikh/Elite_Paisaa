@@ -1,7 +1,29 @@
-import React from 'react';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Phone, Mail, MapPin, Loader2, CheckCircle } from 'lucide-react';
+import { useContact } from '../hooks';
 
 const ContactPage = () => {
+  const { submitContact, loading, success, error, reset } = useContact();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const result = await submitContact(formData);
+    if (result.success) {
+      setFormData({ fullName: '', email: '', phone: '', message: '' });
+      setTimeout(() => reset(), 3000);
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen">
       {/* 1. Header Section */}
@@ -31,7 +53,7 @@ const ContactPage = () => {
             <div className="space-y-8">
               {/* Call Anytime */}
               <div className="flex items-start gap-5 group">
-                <div className="bg-[#00a3e0] p-4 rounded-full text-white transition-transform group-hover:scale-110">
+                <div className="bg-pylon-blue p-4 rounded-full text-white transition-transform group-hover:scale-110">
                   <Phone size={24} fill="white" />
                 </div>
                 <div>
@@ -42,7 +64,7 @@ const ContactPage = () => {
 
               {/* Write Email */}
               <div className="flex items-start gap-5 group border-t border-gray-100 pt-8">
-                <div className="bg-[#00a3e0] p-4 rounded-full text-white transition-transform group-hover:scale-110">
+                <div className="bg-pylon-blue p-4 rounded-full text-white transition-transform group-hover:scale-110">
                   <Mail size={24} fill="white" />
                 </div>
                 <div>
@@ -53,7 +75,7 @@ const ContactPage = () => {
 
               {/* Visit Office */}
               <div className="flex items-start gap-5 group border-t border-gray-100 pt-8">
-                <div className="bg-[#00a3e0] p-4 rounded-full text-white transition-transform group-hover:scale-110">
+                <div className="bg-pylon-blue p-4 rounded-full text-white transition-transform group-hover:scale-110">
                   <MapPin size={24} fill="white" />
                 </div>
                 <div>
@@ -68,39 +90,62 @@ const ContactPage = () => {
 
           {/* Right Side: Contact Form */}
           <div className="lg:w-2/3">
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 text-green-700">
+                <CheckCircle size={20} />
+                <span>Message sent successfully! We'll get back to you soon.</span>
+              </div>
+            )}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <input 
                 type="text" 
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
                 placeholder="Your Name" 
+                required
                 className="w-full p-4 bg-[#f4f7fa] border border-transparent rounded focus:border-blue-400 focus:bg-white outline-none transition-all placeholder:text-gray-400" 
               />
               <input 
                 type="email" 
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 placeholder="Your Email" 
+                required
                 className="w-full p-4 bg-[#f4f7fa] border border-transparent rounded focus:border-blue-400 focus:bg-white outline-none transition-all placeholder:text-gray-400" 
               />
               <input 
                 type="text" 
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
                 placeholder="Phone Number" 
-                className="w-full p-4 bg-[#f4f7fa] border border-transparent rounded focus:border-blue-400 focus:bg-white outline-none transition-all placeholder:text-gray-400" 
-              />
-              <input 
-                type="text" 
-                placeholder="Subject" 
-                className="w-full p-4 bg-[#f4f7fa] border border-transparent rounded focus:border-blue-400 focus:bg-white outline-none transition-all placeholder:text-gray-400" 
+                required
+                className="w-full p-4 bg-[#f4f7fa] border border-transparent rounded focus:border-blue-400 focus:bg-white outline-none transition-all placeholder:text-gray-400 md:col-span-2" 
               />
               <textarea 
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
                 placeholder="Write Message" 
                 rows="6"
+                required
                 className="w-full p-4 bg-[#f4f7fa] border border-transparent rounded focus:border-blue-400 focus:bg-white outline-none transition-all placeholder:text-gray-400 md:col-span-2 resize-none"
               ></textarea>
               
               <div className="md:col-span-2">
                 <button 
                   type="submit" 
-                  className="bg-[#00a3e0] hover:bg-blue-600 text-white font-bold py-4 px-10 rounded transition-all shadow-lg uppercase tracking-wider text-sm"
+                  disabled={loading}
+                  className="bg-pylon-blue hover:bg-blue-600 disabled:bg-gray-400 text-white font-bold py-4 px-10 rounded transition-all shadow-lg uppercase tracking-wider text-sm flex items-center gap-2"
                 >
-                  Send a Message
+                  {loading ? <><Loader2 size={18} className="animate-spin" /> Sending...</> : 'Send a Message'}
                 </button>
               </div>
             </form>

@@ -1,16 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import heroImage from '/src/assets/woman.png';
+import { useContact } from '../../hooks';
+import { Loader2, CheckCircle } from 'lucide-react';
+import heroImage from '../../assets/woman.png';
 
 const Hero = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
+  const { requestQuote, loading } = useContact();
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const onSubmit = (data) => {
-    console.log('Form submitted:', data);
-    alert('Thank you! We will contact you shortly.');
+  const onSubmit = async (data) => {
+    // Parse loan amount range to get a numeric value
+    const amountMap = {
+      '50000-100000': 75000,
+      '100000-500000': 300000,
+      '500000-1000000': 750000,
+      '1000000+': 1500000
+    };
+
+    const quoteData = {
+      name: data.name,
+      phone: data.phone,
+      loanAmount: amountMap[data.amount] || 100000,
+      loanType: data.loanType || 'personal'
+    };
+
+    const result = await requestQuote(quoteData);
+    if (result.success) {
+      setSubmitSuccess(true);
+      reset();
+      setTimeout(() => setSubmitSuccess(false), 5000);
+    }
   };
 
   const containerVariants = {
@@ -189,13 +212,21 @@ const Hero = () => {
                   </select>
                 </div>
                 
+                {submitSuccess && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700 text-sm">
+                    <CheckCircle size={16} />
+                    <span>Quote requested successfully!</span>
+                  </div>
+                )}
+
                 <motion.button 
                   type="submit" 
-                  className="w-full bg-pylon-blue hover:bg-pylon-blue-dark text-white font-bold py-4 rounded-lg transition-colors shadow-lg shadow-blue-200"
+                  disabled={loading}
+                  className="w-full bg-pylon-blue hover:bg-pylon-blue-dark disabled:bg-gray-400 text-white font-bold py-4 rounded-lg transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Get Quote Now
+                  {loading ? <><Loader2 size={18} className="animate-spin" /> Submitting...</> : 'Get Quote Now'}
                 </motion.button>
               </form>
               

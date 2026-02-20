@@ -1,33 +1,39 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../AuthContext.jsx';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const { login, loading } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
 
-  // 1. Check if user is already logged in
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      navigate('/home'); // If user exists, skip login and go home
-    }
-  }, [navigate]);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const registeredUser = JSON.parse(localStorage.getItem('user'));
+    setError('');
+    
+    const result = await login({
+      email: formData.email,
+      password: formData.password
+    });
 
-    if (!registeredUser) {
-      alert("No account found. Please Sign Up first!");
-      return;
-    }
-
-    if (registeredUser.email === email) {
-      // 2. Mark as logged in (you can store a token or a boolean)
-      localStorage.setItem('isLoggedIn', 'true'); 
-      navigate('/home');
+    if (result.success) {
+      // Check if user was trying to access a protected page
+      const redirectTo = localStorage.getItem('redirectTo');
+      localStorage.removeItem('redirectTo');
+      
+      // Redirect to the page they tried to access, or home if none
+      navigate(redirectTo || '/');
     } else {
-      alert("Invalid credentials.");
+      setError(result.error || 'Login failed. Please check your credentials.');
     }
   };
 
@@ -40,13 +46,21 @@ const LoginPage = () => {
         </div>
 
         <form className="space-y-4" onSubmit={handleLogin}>
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input 
               required
               type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none transition"
               placeholder="name@company.com"
             />
@@ -57,6 +71,9 @@ const LoginPage = () => {
             <input 
               required
               type="password" 
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-600 outline-none transition"
               placeholder="••••••••"
             />
@@ -64,9 +81,10 @@ const LoginPage = () => {
 
           <button 
             type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all mt-4 active:scale-95"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition-all mt-4 active:scale-95 flex items-center justify-center gap-2"
           >
-            Sign In
+            {loading ? <><Loader2 size={18} className="animate-spin" /> Signing In...</> : 'Sign In'}
           </button>
         </form>
 

@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Facebook, Twitter, Instagram, Mail, Clock } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, Clock, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+
+  // Check login status
+  useEffect(() => {
+    setIsAuthenticated(localStorage.getItem('isLoggedIn') === 'true');
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.setItem('isLoggedIn', 'false');
+    setIsAuthenticated(false);
+    navigate('/');
+  };
 
   const menuItems = [
     { label: 'Home', path: '/' },
@@ -47,14 +59,30 @@ const Navbar = () => {
       
       <div className="hidden lg:flex items-center gap-4">
         <div className="hidden lg:flex items-center gap-4">
-  {/* Change this line */}
-  <Link to="/login" className="hover:text-blue-600 transition-colors cursor-pointer">
-    Login
-  </Link>
+  {isAuthenticated ? (
+    <>
+      <button 
+        onClick={handleLogout}
+        className="hover:text-red-600 transition-colors cursor-pointer font-medium"
+      >
+        Logout
+      </button>
+    </>
+  ) : (
+    <>
+      <Link to="/login" className="hover:text-blue-600 transition-colors cursor-pointer">
+        Login
+      </Link>
+      <span className="text-gray-300">/</span>
+      <Link to="/signup" className="hover:text-blue-600 transition-colors">
+        Sign Up
+      </Link>
+    </>
+  )}
   <span className="text-gray-300">/</span>
   <Link to="/faqs" className="hover:text-blue-600 transition-colors">
-  FAQs
-</Link>
+    FAQs
+  </Link>
 </div>
       
       </div>
@@ -118,10 +146,21 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* CTA Button */}
-            <div className="hidden lg:block">
+            {/* CTA Buttons */}
+            <div className="hidden lg:flex items-center gap-3">
+              {isAuthenticated && (
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className={`flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 ${
+                    isScrolled ? 'px-4 py-2 text-sm' : 'px-6 py-3'
+                  }`}
+                >
+                  <User size={18} />
+                  Profile
+                </button>
+              )}
               <button 
-                onClick={() => navigate('/apply')} // 3. Redirects to Apply Now
+                onClick={() => navigate('/apply')}
                 className={`bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md transition-all duration-300 ${
                   isScrolled ? 'px-6 py-2 text-sm' : 'px-8 py-3'
                 }`}
