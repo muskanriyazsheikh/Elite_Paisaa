@@ -108,6 +108,7 @@ import FAQPage from './pages/Home/FAQspage';
 import ApplyNowPage from './pages/ApplyNowPage';
 import LoanEligibility from './pages/Home/LoanEligibility';
 import ProfilePage from './pages/Profile/ProfilePage.jsx';
+import LoanDocumentsPage from './pages/LoanDocuments/LoanDocumentsPage.jsx';
 import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
@@ -175,6 +176,7 @@ function App() {
           <Route path="/profile" element={
             <ProtectedRoute><ProfilePage /></ProtectedRoute>
           } />
+          <Route path="/loan-documents/:loanType" element={<LoanDocumentsPage />} />
 
           {/* Fallback redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
