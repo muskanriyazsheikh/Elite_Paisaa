@@ -324,7 +324,6 @@ const ProfilePage = () => {
                     type="email"
                     name="email"
                     value={formData.email}
-                    disabled
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
@@ -339,7 +338,7 @@ const ProfilePage = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    disabled={!isEditing}
+
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-50"
                   />
                 </div>
@@ -353,7 +352,7 @@ const ProfilePage = () => {
                     name="dob"
                     value={formData.dob}
                     onChange={handleChange}
-                    disabled={!isEditing}
+                    
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-50"
                   />
                 </div>

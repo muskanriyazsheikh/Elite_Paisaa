@@ -6,13 +6,10 @@ import { Link, useNavigate } from 'react-router-dom';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState('false');
   const navigate = useNavigate();
 
-  // Check login status
-  useEffect(() => {
-    setIsAuthenticated(localStorage.getItem('isLoggedIn') === 'true');
-  }, []);
+
 
   const handleLogout = () => {
     localStorage.setItem('isLoggedIn', 'false');
@@ -36,6 +33,18 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+   const changeProfile = () => {
+
+    setIsAuthenticated('true');
+
+    console.log('Login status:', localStorage.getItem('isLoggedIn')); // Debugging line
+      
+    };
+
+    const navigateToProfile = () => {
+      navigate('/profile');
+    }
 
   return (
     <>
@@ -70,7 +79,7 @@ const Navbar = () => {
     </>
   ) : (
     <>
-      <Link to="/login" className="hover:text-blue-600 transition-colors cursor-pointer">
+      <Link to="/login" onClick={changeProfile} className="hover:text-blue-600 transition-colors cursor-pointer">
         Login
       </Link>
       <span className="text-gray-300">/</span>
@@ -147,27 +156,28 @@ const Navbar = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="hidden lg:flex items-center gap-3">
-              {isAuthenticated && (
-                <button 
-                  onClick={() => navigate('/profile')}
-                  className={`flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 ${
-                    isScrolled ? 'px-4 py-2 text-sm' : 'px-6 py-3'
-                  }`}
-                >
-                  <User size={18} />
-                  Profile
-                </button>
-              )}
-              <button 
-                onClick={() => navigate('/apply')}
-                className={`bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md transition-all duration-300 ${
-                  isScrolled ? 'px-6 py-2 text-sm' : 'px-8 py-3'
-                }`}
-              >
-                Apply Now
-              </button>
-            </div>
+<div className="lg:flex items-center gap-3">
+  {isAuthenticated && (
+    <button 
+      onClick={navigateToProfile}
+      className={`flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 ${
+        isScrolled ? 'px-4 py-2 text-sm' : 'px-6 py-3'
+      }`}
+    >
+      <User size={18} />
+      Profile
+    </button>
+  )}
+
+  <button 
+    onClick={() => navigate('/apply')}
+    className={`bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md transition-all duration-300 ${
+      isScrolled ? 'px-6 py-2 text-sm' : 'px-8 py-3'
+    }`}
+  >
+    Apply Now
+  </button>
+</div>
 
             {/* Mobile Menu Button */}
             <button 
