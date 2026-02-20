@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Wallet, Home, Car, GraduationCap, Briefcase, CreditCard, 
-  Heart, FileText, CheckCircle, ArrowLeft, ArrowRight 
+  Heart, FileText, CheckCircle, ArrowLeft, ArrowRight, Upload, X, FileCheck, Eye
 } from 'lucide-react';
 
 const loanData = {
@@ -264,8 +264,39 @@ const loanData = {
 const LoanDocumentsPage = () => {
   const { loanType } = useParams();
   const navigate = useNavigate();
+  const [uploadedDocs, setUploadedDocs] = useState({});
   
   const loan = loanData[loanType];
+
+  const [previewDoc, setPreviewDoc] = useState(null);
+
+  const handleFileUpload = (docName, file) => {
+    const fileUrl = URL.createObjectURL(file);
+    setUploadedDocs(prev => ({
+      ...prev,
+      [docName]: { file, url: fileUrl }
+    }));
+  };
+
+  const handleRemoveFile = (docName) => {
+    setUploadedDocs(prev => {
+      const newDocs = { ...prev };
+      delete newDocs[docName];
+      return newDocs;
+    });
+  };
+
+  const getAllDocuments = () => {
+    if (loan.documents) return loan.documents;
+    if (loan.sections) {
+      return loan.sections.flatMap(section => section.documents);
+    }
+    return [];
+  };
+
+  const allDocs = getAllDocuments();
+  const uploadedCount = Object.keys(uploadedDocs).length;
+  const totalDocs = allDocs.length;
   
   if (!loan) {
     return (
@@ -310,46 +341,137 @@ const LoanDocumentsPage = () => {
           </div>
         </div>
 
-        {/* Documents List */}
+        {/* Upload Progress */}
+        <div className="bg-blue-50 rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-semibold text-blue-900">Document Upload Progress</span>
+            <span className="text-blue-700 font-bold">{uploadedCount} / {totalDocs}</span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-3">
+            <div 
+              className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+              style={{ width: `${totalDocs > 0 ? (uploadedCount / totalDocs) * 100 : 0}%` }}
+            ></div>
+          </div>
+          <p className="text-sm text-blue-600 mt-2">
+            {uploadedCount === totalDocs ? 'All documents uploaded! You can now apply.' : 'Please upload all required documents'}
+          </p>
+        </div>
+
+        {/* Documents List with Upload */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="p-8 border-b border-gray-100">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <FileText className="text-blue-600" size={28} />
               Required Documents
             </h3>
+            <p className="text-gray-500 mt-2">Upload all documents to proceed with your application</p>
           </div>
 
-          {loan.sections ? (
-            // Multiple sections
-            <div className="divide-y divide-gray-100">
-              {loan.sections.map((section, idx) => (
-                <div key={idx} className="p-8">
-                  <h4 className="text-lg font-bold text-gray-800 mb-4">{section.title}</h4>
-                  <ul className="space-y-3">
-                    {section.documents.map((doc, docIdx) => (
-                      <li key={docIdx} className="flex items-start gap-3">
-                        <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-                        <span className="text-gray-700">{doc}</span>
-                      </li>
-                    ))}
-                  </ul>
+          <div className="divide-y divide-gray-100">
+            {allDocs.map((doc, idx) => (
+              <div key={idx} className="p-6 flex items-center justify-between hover:bg-gray-50">
+                <div className="flex items-start gap-3 flex-1">
+                  {uploadedDocs[doc] ? (
+                    <FileCheck className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
+                  ) : (
+                    <CheckCircle className="text-gray-400 flex-shrink-0 mt-0.5" size={20} />
+                  )}
+                  <div>
+                    <span className={`block ${uploadedDocs[doc] ? 'text-green-700 font-medium' : 'text-gray-700'}`}>
+                      {doc}
+                    </span>
+                    {uploadedDocs[doc] && (
+                      <span className="text-sm text-green-600">
+                        {uploadedDocs[doc].name}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            // Single list
-            <div className="p-8">
-              <ul className="space-y-3">
-                {loan.documents.map((doc, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-                    <span className="text-gray-700">{doc}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                
+                <div className="ml-4 flex items-center gap-2">
+                  {uploadedDocs[doc] ? (
+                    <>
+                      <button
+                        onClick={() => setPreviewDoc({ name: doc, ...uploadedDocs[doc] })}
+                        className="flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg transition-colors"
+                        title="Preview document"
+                      >
+                        <Eye size={16} />
+                        <span className="text-sm font-medium">Preview</span>
+                      </button>
+                      <button
+                        onClick={() => handleRemoveFile(doc)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        title="Remove file"
+                      >
+                        <X size={18} />
+                      </button>
+                    </>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => e.target.files[0] && handleFileUpload(doc, e.target.files[0])}
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      />
+                      <div className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <Upload size={18} />
+                        <span className="text-sm font-medium">Upload</span>
+                      </div>
+                    </label>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Document Preview Modal */}
+        {previewDoc && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900">{previewDoc.name}</h3>
+                <button
+                  onClick={() => setPreviewDoc(null)}
+                  className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4 bg-gray-100 flex items-center justify-center" style={{ minHeight: '400px' }}>
+                {previewDoc.file.type.startsWith('image/') ? (
+                  <img
+                    src={previewDoc.url}
+                    alt={previewDoc.name}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                  />
+                ) : previewDoc.file.type === 'application/pdf' ? (
+                  <iframe
+                    src={previewDoc.url}
+                    title={previewDoc.name}
+                    className="w-full h-[70vh] rounded-lg"
+                  />
+                ) : (
+                  <div className="text-center p-8">
+                    <FileText size={64} className="text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Preview not available for this file type</p>
+                    <p className="text-sm text-gray-500 mt-2">{previewDoc.file.name}</p>
+                    <a
+                      href={previewDoc.url}
+                      download={previewDoc.file.name}
+                      className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                    >
+                      Download File
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
@@ -362,10 +484,24 @@ const LoanDocumentsPage = () => {
           </button>
           <button 
             onClick={() => navigate('/apply')}
-            className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors flex-1"
+            disabled={uploadedCount < totalDocs}
+            className={`flex items-center justify-center gap-2 font-bold py-4 px-8 rounded-lg transition-colors flex-1 ${
+              uploadedCount === totalDocs 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
-            Apply Now
-            <ArrowRight size={20} />
+            {uploadedCount === totalDocs ? (
+              <>
+                Apply Now
+                <ArrowRight size={20} />
+              </>
+            ) : (
+              <>
+                Upload All Documents First
+                <span className="text-sm">({uploadedCount}/{totalDocs})</span>
+              </>
+            )}
           </button>
         </div>
       </div>
