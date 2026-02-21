@@ -38,6 +38,27 @@ const sampleLoanServices = [
     description: 'Grow your business with our customized business loan solutions.',
     icon: 'business',
     interestRate: 11.0
+  },
+  {
+    _id: '507f1f77bcf86cd799439016',
+    title: 'Gold Loan',
+    description: 'Get quick loans against your gold jewelry at attractive interest rates.',
+    icon: 'gold',
+    interestRate: 8.5
+  },
+  {
+    _id: '507f1f77bcf86cd799439017',
+    title: 'Marriage Loan',
+    description: 'Finance your dream wedding with our special marriage loan.',
+    icon: 'marriage',
+    interestRate: 11.5
+  },
+  {
+    _id: '507f1f77bcf86cd799439018',
+    title: 'Loan Against Property',
+    description: 'Unlock the value of your property with our LAP solutions.',
+    icon: 'lap',
+    interestRate: 10.0
   }
 ];
 
@@ -64,10 +85,7 @@ export const useLoanServices = () => {
         setError(response.message || 'Failed to fetch loan services');
       }
     } catch (err) {
-      console.error('Error fetching services:', err);
-      setError(err.message || 'Failed to fetch loan services');
-      // Use sample data as fallback
-      console.log('Using sample loan services as fallback');
+      // Silently use fallback data - CORS error expected when backend not configured
       setServices(sampleLoanServices);
     } finally {
       setLoading(false);

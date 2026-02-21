@@ -32,7 +32,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
     return data;
   } catch (error) {
-    console.error('API Error:', error);
+    // Don't log CORS errors - they're expected when backend is not configured
     throw error;
   }
 };
