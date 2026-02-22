@@ -1,15 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Facebook, Twitter, Instagram, Mail, Clock, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState('false');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-
+  // Check authentication status on mount and periodically
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      setIsAuthenticated(loggedIn);
+    };
+    
+    // Clear any stale auth data on first load to ensure buttons are hidden
+    // Remove this line if you want to persist login across browser restarts
+    localStorage.removeItem('isLoggedIn');
+    
+    // Check immediately on mount
+    checkAuth();
+    
+    // Check every second to detect login/logout changes
+    const interval = setInterval(checkAuth, 1000);
+    
+    // Also listen for storage changes (in case login happens in another tab)
+    window.addEventListener('storage', checkAuth);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.setItem('isLoggedIn', 'false');
@@ -34,87 +59,14 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-   const changeProfile = () => {
-
-    setIsAuthenticated('true');
-
-    console.log('Login status:', localStorage.getItem('isLoggedIn')); // Debugging line
-      
-    };
-
-    const navigateToProfile = () => {
-      navigate('/profile');
-    }
+  // Function to update auth state after login
+  const updateAuthState = () => {
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    setIsAuthenticated(loggedIn);
+  };
 
   return (
     <>
-      {/* Top Bar */}
-       <motion.div 
-  className={`bg-[#f4f7f9] text-[#4b5563] py-2 border-b border-gray-200 transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}
-  initial={{ y: 0 }}
-  animate={{ y: isScrolled ? -50 : 0 }}
->
-  <div className="container mx-auto px-4 flex justify-between items-center text-[13px] font-medium">
-    
-    {/* Left Side: Social Icons & Quick Links */}
-    <div className="flex items-center gap-6">
-      <div className="flex items-center gap-4 border-r border-gray-300 pr-6">
-        <Facebook size={14} className="cursor-pointer hover:text-blue-600 transition-colors" />
-        <Twitter size={14} className="cursor-pointer hover:text-blue-400 transition-colors" />
-        <Instagram size={14} className="cursor-pointer hover:text-pink-600 transition-colors" />
-        {/* Pinterest icon substitute */}
-        <div className="w-3.5 h-3.5 border-2 border-[#4b5563] rounded-full flex items-center justify-center text-[8px] font-bold cursor-pointer hover:border-red-600 hover:text-red-600">P</div>
-      </div>
-      
-      <div className="hidden lg:flex items-center gap-4">
-        <div className="hidden lg:flex items-center gap-4">
-  {isAuthenticated ? (
-    <>
-      <button 
-        onClick={handleLogout}
-        className="hover:text-red-600 transition-colors cursor-pointer font-medium"
-      >
-        Logout
-      </button>
-    </>
-  ) : (
-    <>
-      <Link to="/login" onClick={changeProfile} className="hover:text-blue-600 transition-colors cursor-pointer">
-        Login
-      </Link>
-      <span className="text-gray-300">/</span>
-      <Link to="/signup" className="hover:text-blue-600 transition-colors">
-        Sign Up
-      </Link>
-    </>
-  )}
-  <span className="text-gray-300">/</span>
-  <Link to="/faqs" className="hover:text-blue-600 transition-colors">
-    FAQs
-  </Link>
-</div>
-      
-      </div>
-    </div>
-
-    {/* Right Side: Contact Details */}
-    <div className="flex items-center gap-6">
-      <a 
-  href="mailto:info@elitepaisaa.com" 
-  className="flex items-center gap-2 hover:text-blue-400 transition-colors"
->
-  <Mail size={14} className="text-blue-500" /> 
-  info@elitepaisaa.com
-</a>
-      <span className="hidden sm:flex items-center gap-2">
-        <Clock size={15} className="text-blue-600" />
-        Mon - Sat 9:00 AM - 6:00 PM
-      </span>
-    </div>
-
-  </div>
-</motion.div>
-
       {/* Main Navbar */}
       <motion.nav 
         className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -135,7 +87,7 @@ const Navbar = () => {
               </div>
               <div className="flex flex-col">
                 <span className={`font-bold font-heading text-pylon-dark transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'}`}>
-                  ELITE<span className="text-pylon-blue"> PAISAA</span>
+                  ELITE<span className="text-pylon-blue"> PAISA</span>
                 </span>
                 <span className={`text-gray-500 tracking-wider transition-all duration-300 ${isScrolled ? 'text-[10px]' : 'text-xs'}`}>LOAN & FINANCE</span>
               </div>
@@ -158,15 +110,40 @@ const Navbar = () => {
             {/* CTA Buttons */}
 <div className="hidden lg:flex items-center gap-2 xl:gap-3">
   {isAuthenticated && (
-    <button 
-      onClick={navigateToProfile}
-      className={`flex items-center gap-1 xl:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 whitespace-nowrap ${
-        isScrolled ? 'px-3 py-2 text-xs' : 'px-4 py-2 text-sm'
-      }`}
-    >
-      <User size={16} />
-      <span className="hidden xl:inline">Profile</span>
-    </button>
+    <div className="relative">
+      {/* Profile Button with Dropdown */}
+      <button 
+        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+        className={`flex items-center gap-1 xl:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-md transition-all duration-300 whitespace-nowrap ${
+          isScrolled ? 'px-3 py-2 text-xs' : 'px-4 py-2 text-sm'
+        }`}
+      >
+        <User size={16} />
+        <span className="hidden xl:inline">Profile</span>
+        <svg className={`w-4 h-4 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {/* Profile Dropdown */}
+      {isProfileDropdownOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+          <button
+            onClick={() => { navigate('/profile'); setIsProfileDropdownOpen(false); }}
+            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            View Profile
+          </button>
+          <hr className="my-1 border-gray-100" />
+          <button
+            onClick={() => { handleLogout(); setIsProfileDropdownOpen(false); }}
+            className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      )}
+    </div>
   )}
 
   <button 

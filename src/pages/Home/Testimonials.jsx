@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { User } from 'lucide-react';
 
 const Testimonials = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -8,7 +9,6 @@ const Testimonials = () => {
       name: "Rajesh Kumar",
       role: "Business Owner",
       location: "Mumbai, Maharashtra",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
       rating: 5,
       text: "ElitePaisaa helped me expand my business with a quick business loan. The process was smooth, and I got approval within 24 hours. Highly recommended!"
     },
@@ -75,11 +75,9 @@ const Testimonials = () => {
 
               {/* Author */}
               <div className="flex items-center gap-4">
-                <img 
-                  src={testimonial.image} 
-                  alt={testimonial.name}
-                  className="w-14 h-14 rounded-full object-cover"
-                />
+                <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User size={28} className="text-blue-600" />
+                </div>
                 <div>
                   <h4 className="font-bold text-pylon-dark">{testimonial.name}</h4>
                   <p className="text-sm text-gray-500">{testimonial.role}</p>
@@ -107,11 +105,9 @@ const Testimonials = () => {
 
             {/* Author */}
             <div className="flex items-center gap-4">
-              <img 
-                src={testimonials[activeIndex].image} 
-                alt={testimonials[activeIndex].name}
-                className="w-14 h-14 rounded-full object-cover"
-              />
+              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
+                <User size={28} className="text-blue-600" />
+              </div>
               <div>
                 <h4 className="font-bold text-pylon-dark">{testimonials[activeIndex].name}</h4>
                 <p className="text-sm text-gray-500">{testimonials[activeIndex].role}</p>

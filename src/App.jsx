@@ -109,6 +109,8 @@ import ApplyNowPage from './pages/ApplyNowPage';
 import LoanEligibility from './pages/Home/LoanEligibility';
 import ProfilePage from './pages/Profile/ProfilePage.jsx';
 import LoanDocumentsPage from './pages/LoanDocuments/LoanDocumentsPage.jsx';
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
+import TermsOfService from './pages/TermsOfService.jsx';
 import ScrollToTop from './components/ScrollToTop';
 import './index.css';
 
@@ -168,6 +170,8 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/calculator" element={<LoanCalculator />} />
           <Route path="/eligibility" element={<LoanEligibility />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
 
           {/* --- LOCKED ROUTES (Only for Logged In users) --- */}
           <Route path="/apply" element={

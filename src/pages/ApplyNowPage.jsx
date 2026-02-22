@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLoanApplications, useLoanServices } from '../hooks';
 import { useAuth } from '../AuthContext.jsx';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2, CheckCircle, AlertCircle, Wallet, Home, Car, GraduationCap, Briefcase, CreditCard, FileText, Upload, X, FileCheck, Eye } from 'lucide-react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { Loader2, CheckCircle, AlertCircle, FileText, Upload, X, FileCheck, Eye } from 'lucide-react';
 
 // Fallback loan services if API fails
 // Using valid MongoDB ObjectId format (24 hex characters)
@@ -16,432 +16,6 @@ const fallbackServices = [
   { _id: '507f1f77bcf86cd799439017', title: 'Marriage Loan', description: 'Finance your dream wedding', icon: 'marriage', interestRate: 11.5 },
   { _id: '507f1f77bcf86cd799439018', title: 'Loan Against Property', description: 'Unlock property value', icon: 'lap', interestRate: 10.0 },
 ];
-
-const ApplyNowPage = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { submitApplication, loading, error } = useLoanApplications();
-  const { services: apiServices, loading: servicesLoading } = useLoanServices();
-  const { user } = useAuth();
-  
-  // Get loan from URL query param
-  const loanParam = searchParams.get('loan');
-  
-  // Use API services if available, otherwise use fallback
-  const services = useMemo(() => {
-    return apiServices?.length > 0 ? apiServices : fallbackServices;
-  }, [apiServices]);
-  const [success, setSuccess] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    loanAmount: '',
-    monthlyIncome: '',
-    loanService: '',
-    loanTenure: '',
-    fullName: user?.fullName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    dob: '',
-    houseNumber: '',
-    area: '',
-    city: '',
-    state: '',
-    pincode: ''
-  });
-
-  // State for uploaded documents
-  const [uploadedDocuments, setUploadedDocuments] = useState({});
-  const [documentError, setDocumentError] = useState('');
-
-  // Update form when services load - use URL param if available
-  useEffect(() => {
-    if (services.length > 0 && !formData.loanService) {
-      let selectedLoanId = services[0]._id; // Default to first service
-      
-      // If URL has loan param, find matching service
-      if (loanParam) {
-        const matchingService = services.find(s => 
-          s._id === loanParam || 
-          s.title.toLowerCase().replace(/\s+/g, '-') === loanParam.toLowerCase() ||
-          s.title === loanParam
-        );
-        if (matchingService) {
-          selectedLoanId = matchingService._id;
-        }
-      }
-      setFormData(prev => ({ ...prev, loanService: selectedLoanId }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [services.length, loanParam]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const getLoanTypeFromId = (serviceId) => {
-    const service = services.find(s => s._id === serviceId);
-    if (!service) return 'personal';
-    const keys = {
-      'Personal Loan': 'personal',
-      'Home Loan': 'home',
-      'Business Loan': 'business',
-      'Gold Loan': 'gold',
-      'Vehicle Loan': 'car',
-      'Car Loan': 'car',
-      'Education Loan': 'education',
-      'Marriage Loan': 'marriage',
-      'Loan Against Property': 'lap'
-    };
-    return keys[service.title] || 'personal';
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate loan service is selected
-    if (!formData.loanService) {
-      alert('Please select a loan service');
-      return;
-    }
-
-    // Validate all documents are uploaded
-    const loanType = getLoanTypeFromId(formData.loanService);
-    const documentsData = loanDocumentsData[loanType] || loanDocumentsData['personal'];
-    const getAllDocuments = () => {
-      if (Array.isArray(documentsData)) return documentsData;
-      if (typeof documentsData === 'object') {
-        return Object.values(documentsData).flat();
-      }
-      return [];
-    };
-    const allDocuments = getAllDocuments();
-    const uploadedCount = Object.keys(uploadedDocuments).length;
-    
-    if (uploadedCount < allDocuments.length) {
-      setDocumentError(`Please upload all required documents (${uploadedCount}/${allDocuments.length} uploaded)`);
-      // Scroll to document section
-      document.getElementById('document-section')?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    
-    setDocumentError('');
-    
-    const applicationData = {
-      loanService: formData.loanService,
-      loanAmount: Number(formData.loanAmount),
-      loanTenure: Number(formData.loanTenure),
-      monthlyIncome: Number(formData.monthlyIncome),
-      personalDetails: {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        dob: formData.dob
-      },
-      address: {
-        houseNumber: formData.houseNumber,
-        area: formData.area,
-        city: formData.city,
-        state: formData.state,
-        pincode: formData.pincode
-      }
-    };
-
-    console.log('Submitting application:', applicationData);
-    
-    let result;
-    try {
-      result = await submitApplication(applicationData);
-    } catch (apiErr) {
-      console.warn('Backend API error:', apiErr);
-      // TEMPORARY: Always show success for demo/testing
-      // The backend has issues with loan service validation
-      result = { success: true };
-    }
-    
-    // TEMPORARY: Force success for demo even if backend returns error
-    if (!result.success) {
-      console.warn('Backend returned error, forcing success for demo');
-      result = { success: true };
-    }
-    
-    if (result.success) {
-      console.log('Application submitted successfully!');
-      setSuccess(true);
-      setFormData({
-        loanAmount: '',
-        monthlyIncome: '',
-        loanService: '',
-        loanTenure: '',
-        fullName: user?.fullName || '',
-        email: user?.email || '',
-        phone: user?.phone || '',
-        dob: '',
-        houseNumber: '',
-        area: '',
-        city: '',
-        state: '',
-        pincode: ''
-      });
-    } else {
-      alert('Failed to submit application: ' + (result.error || 'Unknown error'));
-    }
-  };
-
-  if (success) {
-    return (
-      <div className="bg-white min-h-screen pb-20">
-        <div className="relative h-[300px] bg-[#0a1121] flex flex-col justify-center px-10 md:px-20 text-white">
-          <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
-          <div className="relative z-10">
-            <h1 className="text-5xl font-black tracking-tighter">Apply Now</h1>
-          </div>
-        </div>
-        <div className="container mx-auto px-6 max-w-5xl mt-20 text-center">
-          <CheckCircle size={80} className="mx-auto text-green-500 mb-6" />
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Application Submitted Successfully!</h2>
-          <p className="text-gray-600 mb-8">We'll review your application and get back to you within 24-48 hours.</p>
-          <button 
-            onClick={() => setSuccess(false)}
-            className="bg-[#00a3e0] hover:bg-[#008cc0] text-white font-bold py-4 px-10 rounded shadow-lg transition-all"
-          >
-            Submit Another Application
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white min-h-screen pb-20">
-      {/* 1. Hero Header Section */}
-      <div className="relative h-[300px] bg-[#0a1121] flex flex-col justify-center px-10 md:px-20 text-white">
-        <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
-        <div className="relative z-10">
-
-          <h1 className="text-5xl font-black tracking-tighter">Apply Now</h1>
-        </div>
-      </div>
-
-      {/* 3. Form Container */}
-      <div className="container mx-auto px-6 max-w-5xl mt-12">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
-            <AlertCircle size={20} />
-            <span>{error}</span>
-          </div>
-        )}
-        <form className="space-y-12" onSubmit={handleSubmit}> 
-          
-          {/* Section 1: Loan Details */}
-          <section>
-            <div className="mb-6">
-              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                Calculate your loan amount <span className="h-[2px] w-12 bg-blue-600 inline-block"></span>
-              </p>
-              <h2 className="text-3xl font-black text-slate-900 mt-2">Loan Details</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input 
-                type="number" 
-                name="loanAmount"
-                value={formData.loanAmount}
-                onChange={handleChange}
-                placeholder="Loan Amount*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none focus:border-blue-600 transition" 
-              />
-              <input 
-                type="number" 
-                name="monthlyIncome"
-                value={formData.monthlyIncome}
-                onChange={handleChange}
-                placeholder="Monthly Income*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none focus:border-blue-600 transition" 
-              />
-              <div className="relative">
-                <select 
-                  name="loanService"
-                  value={formData.loanService}
-                  onChange={(e) => {
-                    setFormData(prev => ({ ...prev, loanService: e.target.value }));
-                  }}
-                  disabled={servicesLoading}
-                  required
-                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none appearance-none cursor-pointer"
-                >
-                  <option value="">Select a loan service*</option>
-                  {servicesLoading ? (
-                    <option>Loading...</option>
-                  ) : (
-                    services.map(service => (
-                      <option key={service._id} value={service._id}>
-                        {service.title}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-              <select 
-                name="loanTenure"
-                value={formData.loanTenure}
-                onChange={handleChange}
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none appearance-none"
-              >
-                <option value="">Select Loan Year</option>
-                <option value="1">1 Year</option>
-                <option value="3">3 Years</option>
-                <option value="5">5 Years</option>
-                <option value="7">7 Years</option>
-                <option value="10">10 Years</option>
-                <option value="15">15 Years</option>
-                <option value="20">20 Years</option>
-              </select>
-            </div>
-          </section>
-
-          {/* Section 2: Personal Details */}
-          <section>
-            <div className="mb-6">
-              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                Ask for More Details <span className="h-[2px] w-12 bg-blue-600 inline-block"></span>
-              </p>
-              <h2 className="text-3xl font-black text-slate-900 mt-2">Personal Details</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input 
-                type="text" 
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Full Name [as per Taxpayer ID]*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="email" 
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="tel" 
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Mobile Number*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="date" 
-                name="dob"
-                value={formData.dob}
-                onChange={handleChange}
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none text-gray-600" 
-              />
-            </div>
-          </section>
-
-          {/* Section 3: Address Details */}
-          <section>
-            <div className="mb-6">
-              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                Street, City and State <span className="h-[2px] w-12 bg-blue-600 inline-block"></span>
-              </p>
-              <h2 className="text-3xl font-black text-slate-900 mt-2">Address Details</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <input 
-                type="text" 
-                name="houseNumber"
-                value={formData.houseNumber}
-                onChange={handleChange}
-                placeholder="House No/Name*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="text" 
-                name="area"
-                value={formData.area}
-                onChange={handleChange}
-                placeholder="Street/Area*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="text" 
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="City*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="text" 
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                placeholder="State*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-              <input 
-                type="text" 
-                name="pincode"
-                value={formData.pincode}
-                onChange={handleChange}
-                placeholder="Pin Code*" 
-                required
-                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
-              />
-            </div>
-          </section>
-
-          {/* Document Upload Section - Only show when loan service is selected */}
-          {formData.loanService && (
-            <div id="document-section">
-              {documentError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-4 flex items-center gap-2">
-                  <AlertCircle size={20} />
-                  <span className="font-medium">{documentError}</span>
-                </div>
-              )}
-              <DocumentUploadSection
-                key={formData.loanService}
-                loanType={getLoanTypeFromId(formData.loanService)}
-                onDocumentsChange={setUploadedDocuments}
-              />
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <div className="pt-6">
-            <button 
-              type="submit"
-              disabled={loading}
-              className="bg-pylon-blue disabled:bg-gray-400 text-white font-bold py-4 px-10 rounded shadow-lg transition-all active:scale-95 flex items-center gap-2"
-            >
-              {loading ? <><Loader2 size={20} className="animate-spin" /> Submitting...</> : 'Submit'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 // Loan Documents Data - Complete list from PDF
 const loanDocumentsData = {
@@ -816,6 +390,453 @@ const DocumentRow = ({ doc, uploadedDocs, handleFileUpload, handleRemoveFile, se
             </div>
           </label>
         )}
+      </div>
+    </div>
+  );
+};
+
+const ApplyNowPage = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { submitApplication, loading, error } = useLoanApplications();
+  const { services: apiServices, loading: servicesLoading } = useLoanServices();
+  const { user } = useAuth();
+  
+  // Get loan from URL query param
+  const loanParam = searchParams.get('loan');
+  
+  // Check if we need to scroll to form (from footer navigation)
+  const scrollToForm = location.state?.scrollToForm;
+  
+  // Use API services if available, otherwise use fallback
+  const services = useMemo(() => {
+    return apiServices?.length > 0 ? apiServices : fallbackServices;
+  }, [apiServices]);
+  const [success, setSuccess] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    loanAmount: '',
+    monthlyIncome: '',
+    loanService: '',
+    loanTenure: '',
+    fullName: user?.fullName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    dob: '',
+    houseNumber: '',
+    area: '',
+    city: '',
+    state: '',
+    pincode: ''
+  });
+
+  // State for uploaded documents
+  const [uploadedDocuments, setUploadedDocuments] = useState({});
+  const [documentError, setDocumentError] = useState('');
+
+  // Update form when services load or URL param changes
+  useEffect(() => {
+    if (services.length > 0) {
+      let selectedLoanId = '';
+      
+      // If URL has loan param, find matching service
+      if (loanParam) {
+        const matchingService = services.find(s => 
+          s._id === loanParam || 
+          s.title.toLowerCase().replace(/\s+/g, '-') === loanParam.toLowerCase() ||
+          s.title === loanParam
+        );
+        if (matchingService) {
+          selectedLoanId = matchingService._id;
+        }
+      }
+      
+      // If no loan param or no match, default to first service
+      if (!selectedLoanId) {
+        selectedLoanId = services[0]._id;
+      }
+      
+      // Only update if different to avoid infinite loop
+      if (selectedLoanId !== formData.loanService) {
+        setFormData(prev => ({ ...prev, loanService: selectedLoanId }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [services.length, loanParam]);
+
+  // Scroll to form when coming from footer navigation
+  useEffect(() => {
+    if (scrollToForm) {
+      // Wait for the page to render and loan to be selected
+      const timer = setTimeout(() => {
+        const formElement = document.querySelector('form');
+        if (formElement) {
+          formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        // Clear the state so it doesn't scroll on refresh
+        navigate(location.pathname + location.search, { replace: true, state: {} });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollToForm, navigate, location.pathname, location.search]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const getLoanTypeFromId = (serviceId) => {
+    const service = services.find(s => s._id === serviceId);
+    if (!service) return 'personal';
+    const keys = {
+      'Personal Loan': 'personal',
+      'Home Loan': 'home',
+      'Business Loan': 'business',
+      'Gold Loan': 'gold',
+      'Vehicle Loan': 'car',
+      'Car Loan': 'car',
+      'Education Loan': 'education',
+      'Marriage Loan': 'marriage',
+      'Loan Against Property': 'lap'
+    };
+    return keys[service.title] || 'personal';
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate loan service is selected
+    if (!formData.loanService) {
+      alert('Please select a loan service');
+      return;
+    }
+
+    // Validate all documents are uploaded
+    const loanType = getLoanTypeFromId(formData.loanService);
+    const documentsData = loanDocumentsData[loanType] || loanDocumentsData['personal'];
+    const getAllDocuments = () => {
+      if (Array.isArray(documentsData)) return documentsData;
+      if (typeof documentsData === 'object') {
+        return Object.values(documentsData).flat();
+      }
+      return [];
+    };
+    const allDocuments = getAllDocuments();
+    const uploadedCount = Object.keys(uploadedDocuments).length;
+    
+    if (uploadedCount < allDocuments.length) {
+      setDocumentError(`Please upload all required documents (${uploadedCount}/${allDocuments.length} uploaded)`);
+      // Scroll to document section
+      document.getElementById('document-section')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    
+    setDocumentError('');
+    
+    const applicationData = {
+      loanService: formData.loanService,
+      loanAmount: Number(formData.loanAmount),
+      loanTenure: Number(formData.loanTenure),
+      monthlyIncome: Number(formData.monthlyIncome),
+      personalDetails: {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        dob: formData.dob
+      },
+      address: {
+        houseNumber: formData.houseNumber,
+        area: formData.area,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode
+      }
+    };
+
+    console.log('Submitting application:', applicationData);
+    
+    let result;
+    try {
+      result = await submitApplication(applicationData);
+    } catch (apiErr) {
+      console.warn('Backend API error:', apiErr);
+      // TEMPORARY: Always show success for demo/testing
+      result = { success: true };
+    }
+    
+    // TEMPORARY: Force success for demo even if backend returns error
+    if (!result.success) {
+      console.warn('Backend returned error, forcing success for demo');
+      result = { success: true };
+    }
+    
+    if (result.success) {
+      console.log('Application submitted successfully!');
+      setSuccess(true);
+      setFormData({
+        loanAmount: '',
+        monthlyIncome: '',
+        loanService: '',
+        loanTenure: '',
+        fullName: user?.fullName || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        dob: '',
+        houseNumber: '',
+        area: '',
+        city: '',
+        state: '',
+        pincode: ''
+      });
+    } else {
+      alert('Failed to submit application: ' + (result.error || 'Unknown error'));
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="bg-white min-h-screen pb-20">
+        <div className="relative h-[300px] bg-[#0a1121] flex flex-col justify-center px-10 md:px-20 text-white">
+          <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
+          <div className="relative z-10">
+            <h1 className="text-5xl font-black tracking-tighter">Apply Now</h1>
+          </div>
+        </div>
+        <div className="container mx-auto px-6 max-w-5xl mt-20 text-center">
+          <CheckCircle size={80} className="mx-auto text-green-500 mb-6" />
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Application Submitted Successfully!</h2>
+          <p className="text-gray-600 mb-8">We'll review your application and get back to you within 24-48 hours.</p>
+          <button 
+            onClick={() => setSuccess(false)}
+            className="bg-[#00a3e0] hover:bg-[#008cc0] text-white font-bold py-4 px-10 rounded shadow-lg transition-all"
+          >
+            Submit Another Application
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white min-h-screen pb-20">
+      {/* 1. Hero Header Section */}
+      <div className="relative h-[300px] bg-[#0a1121] flex flex-col justify-center px-10 md:px-20 text-white">
+        <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black tracking-tighter">Apply Now</h1>
+        </div>
+      </div>
+
+      {/* 2. Main Content */}
+      <div className="container mx-auto px-6 max-w-5xl -mt-10 relative z-10">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-8 md:p-12 space-y-10">
+          
+          {/* Section 1: Loan Details */}
+          <section>
+            <div className="mb-6">
+              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Calculate your loan amount <span className="h-[2px] w-12 bg-blue-600 inline-block"></span>
+              </p>
+              <h2 className="text-3xl font-black text-slate-900 mt-2">Loan Details</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input 
+                type="number" 
+                name="loanAmount"
+                value={formData.loanAmount}
+                onChange={handleChange}
+                placeholder="Loan Amount*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none focus:border-blue-600 transition" 
+              />
+              <input 
+                type="number" 
+                name="monthlyIncome"
+                value={formData.monthlyIncome}
+                onChange={handleChange}
+                placeholder="Monthly Income*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none focus:border-blue-600 transition" 
+              />
+              <div className="relative">
+                <select 
+                  name="loanService"
+                  value={formData.loanService}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, loanService: e.target.value }));
+                  }}
+                  disabled={servicesLoading}
+                  required
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none appearance-none cursor-pointer"
+                >
+                  <option value="">Select a loan service*</option>
+                  {servicesLoading ? (
+                    <option>Loading...</option>
+                  ) : (
+                    services.map(service => (
+                      <option key={service._id} value={service._id}>
+                        {service.title}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <select 
+                name="loanTenure"
+                value={formData.loanTenure}
+                onChange={handleChange}
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none appearance-none"
+              >
+                <option value="">Select Loan Year</option>
+                <option value="1">1 Year</option>
+                <option value="3">3 Years</option>
+                <option value="5">5 Years</option>
+                <option value="7">7 Years</option>
+                <option value="10">10 Years</option>
+                <option value="15">15 Years</option>
+                <option value="20">20 Years</option>
+              </select>
+            </div>
+          </section>
+
+          {/* Section 2: Personal Details */}
+          <section>
+            <div className="mb-6">
+              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Ask for more details <span className="h-[2px] w-12 bg-blue-600 inline-block"></span>
+              </p>
+              <h2 className="text-3xl font-black text-slate-900 mt-2">Personal Details</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input 
+                type="text" 
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Full Name*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="email" 
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email Address*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="tel" 
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Mobile Number*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="date" 
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none text-gray-600" 
+              />
+            </div>
+          </section>
+
+          {/* Section 3: Address Details */}
+          <section>
+            <div className="mb-6">
+              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                Street, City and State <span className="h-[2px] w-12 bg-blue-600 inline-block"></span>
+              </p>
+              <h2 className="text-3xl font-black text-slate-900 mt-2">Address Details</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <input 
+                type="text" 
+                name="houseNumber"
+                value={formData.houseNumber}
+                onChange={handleChange}
+                placeholder="House No/Name*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="text" 
+                name="area"
+                value={formData.area}
+                onChange={handleChange}
+                placeholder="Street/Area*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="text" 
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                placeholder="City*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="text" 
+                name="state"
+                value={formData.state}
+                onChange={handleChange}
+                placeholder="State*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+              <input 
+                type="text" 
+                name="pincode"
+                value={formData.pincode}
+                onChange={handleChange}
+                placeholder="Pin Code*" 
+                required
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded outline-none" 
+              />
+            </div>
+          </section>
+
+          {/* Document Upload Section - Only show when loan service is selected */}
+          {formData.loanService && (
+            <div id="document-section">
+              {documentError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-4 flex items-center gap-2">
+                  <AlertCircle size={20} />
+                  <span className="font-medium">{documentError}</span>
+                </div>
+              )}
+              <DocumentUploadSection
+                key={formData.loanService}
+                loanType={getLoanTypeFromId(formData.loanService)}
+                onDocumentsChange={setUploadedDocuments}
+              />
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div className="pt-6">
+            <button 
+              type="submit"
+              disabled={loading}
+              className="bg-pylon-blue disabled:bg-gray-400 text-white font-bold py-4 px-10 rounded shadow-lg transition-all active:scale-95 flex items-center gap-2"
+            >
+              {loading ? <><Loader2 size={20} className="animate-spin" /> Submitting...</> : 'Submit'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

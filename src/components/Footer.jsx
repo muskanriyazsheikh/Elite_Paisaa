@@ -1,29 +1,40 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // Import Link for internal navigation
+import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate for internal navigation
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const navigate = useNavigate();
 
   const footerLinks = {
     loans: [
-      { name: 'Personal Loan', href: '/apply' },
-      { name: 'Home Loan', href: '/apply' },
-      { name: 'Business Loan', href: '/apply' },
-      { name: 'Gold Loan', href: '/apply' },
-      { name: 'Vehicle Loan', href: '/apply' },
+      { name: 'Personal Loan', href: '/apply?loan=personal-loan' },
+      { name: 'Home Loan', href: '/apply?loan=home-loan' },
+      { name: 'Business Loan', href: '/apply?loan=business-loan' },
+      { name: 'Gold Loan', href: '/apply?loan=gold-loan' },
+      { name: 'Car Loan', href: '/apply?loan=car-loan' },
+      { name: 'Education Loan', href: '/apply?loan=education-loan' },
+      { name: 'Marriage Loan', href: '/apply?loan=marriage-loan' },
     ],
     company: [
       { name: 'About Us', href: '/about' },
-      { name: 'Our Team', href: '/about' }, // Assuming team is on about page
       { name: 'Contact Us', href: '/contact' },
     ],
     support: [
       { name: 'FAQs', href: '/faqs' },
-      { name: 'Privacy Policy', href: '#' },
-      { name: 'Terms of Service', href: '#' },
-      { name: 'Cookie Policy', href: '#' },
-      { name: 'Sitemap', href: '#' },
+      { name: 'Privacy Policy', href: '/privacy-policy' },
+      { name: 'Terms of Service', href: '/terms-of-service' },
     ],
+  };
+
+  // Handle loan link click - navigate and scroll to form
+  const handleLoanClick = (href) => {
+    navigate(href, { state: { scrollToForm: true } });
+  };
+
+  // Handle regular link click - navigate and scroll to top
+  const handleLinkClick = (href) => {
+    navigate(href);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -39,7 +50,7 @@ const Footer = () => {
                 </svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold">ELITE<span className="text-pylon-blue"> PAISAA</span></span>
+                <span className="text-2xl font-bold">ELITE<span className="text-pylon-blue"> PAISA</span></span>
                 <span className="text-xs text-gray-400 tracking-wider">LOAN & FINANCE</span>
               </div>
             </Link>
@@ -51,11 +62,11 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-gray-300">
-                <svg className="w-5 h-5 text-pylon-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-9 h-9 text-pylon-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <span>123 Finance Street, Mumbai, Maharashtra 400001</span>
+                <span>1st Floor Mohota Complex, Above State Bank Of India, Katol Road, Chhaoni Rd, Nagpur, Maharashtra, 440013</span>
               </div>
               
               {/* EMAIL LINK: mailto: protocol */}
@@ -63,7 +74,7 @@ const Footer = () => {
                 <svg className="w-5 h-5 text-pylon-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
-                <span>info@elitepaisaa.com</span>
+                <span>info@elitepaisa.in</span>
               </a>
 
               {/* PHONE LINK: tel: protocol */}
@@ -82,9 +93,12 @@ const Footer = () => {
             <ul className="space-y-3">  
               {footerLinks.loans.map((link, idx) => (
                 <li key={idx}>
-                  <Link to={link.href} className="text-gray-400 hover:text-pylon-blue transition">
+                  <button 
+                    onClick={() => handleLoanClick(link.href)}
+                    className="text-gray-400 hover:text-pylon-blue transition text-left"
+                  >
                     {link.name}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -95,9 +109,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.company.map((link, idx) => (
                 <li key={idx}>
-                  <Link to={link.href} className="text-gray-400 hover:text-pylon-blue transition">
+                  <button 
+                    onClick={() => handleLinkClick(link.href)}
+                    className="text-gray-400 hover:text-pylon-blue transition text-left"
+                  >
                     {link.name}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -108,9 +125,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.support.map((link, idx) => (
                 <li key={idx}>
-                  <Link to={link.href} className="text-gray-400 hover:text-pylon-blue transition">
+                  <button 
+                    onClick={() => handleLinkClick(link.href)}
+                    className="text-gray-400 hover:text-pylon-blue transition text-left"
+                  >
                     {link.name}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>

@@ -12,9 +12,9 @@ const AboutTeamPage = () => {
 
   const teamMembers = [
     { name: "Arjun Mehta", role: "Financial Expert", img:Man1 },
-    { name: "Priya Sharma", role: "Loan Consultant", img:Man2 },
+    { name: "Priyanshu Sharma", role: "Loan Consultant", img:Man2 },
     { name: "Saniya Sheikh", role: "Senior Analyst", img: Woman1 },
-    { name: "Ananya Iyer", role: "Expert Agent", img: Man4 },
+    { name: "Anay Iyer", role: "Expert Agent", img: Man4 },
     { name: "Rohan Das", role: "Compliance Officer", img: Man3 },
     { name: "Sana Khan", role: "Support Lead", img: woman2 },
   ];
