@@ -1,181 +1,87 @@
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://elitepaisa-backend-production.up.railway.app/api';
+import axios from "axios";
 
-// Helper function to get auth token
-const getToken = () => localStorage.getItem('token');
+// Create axios instance with base URL
+const Api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'https://elitepaisa-backend-production.up.railway.app/api',
+});
 
-// Helper function for API requests
-const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
-
-  // Add auth token if available
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  try {
-    const response = await fetch(url, config);
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Something went wrong');
+// Request interceptor to add auth token
+Api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-    return data;
-  } catch (error) {
-    // Don't log CORS errors - they're expected when backend is not configured
-    throw error;
+// Response interceptor for error handling
+Api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 - Unauthorized
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('isLoggedIn');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
   }
+);
+
+// ============== AUTH ==============
+export const signup = (userData) => Api.post("/auth/signup", userData);
+export const login = (credentials) => Api.post("/auth/login", credentials);
+export const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('isLoggedIn');
 };
 
-// ==================== AUTH API ====================
-export const authAPI = {
-  // Register new user
-  signup: async (userData) => {
-    return apiRequest('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-  },
+// ============== PROFILE ==============
+export const getProfile = () => Api.get("/profile");
+export const updateProfile = (profileData) => Api.put("/profile", profileData);
 
-  // Login user
-  login: async (credentials) => {
-    return apiRequest('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-  },
+// ============== LOAN SERVICES ==============
+export const getAllServices = () => Api.get("/loans");
+export const getServiceById = (id) => Api.get(`/loans/${id}`);
 
-  // Logout user
-  logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isLoggedIn');
-  },
-};
+// ============== CONTACT ==============
+export const submitContact = (contactData) => Api.post("/contact", contactData);
 
-// ==================== PROFILE API ====================
-export const profileAPI = {
-  // Get user profile
-  getProfile: async () => {
-    return apiRequest('/profile', {
-      method: 'GET',
-    });
-  },
+// ============== LOAN QUOTE ==============
+export const requestQuote = (quoteData) => Api.post("/quotes", quoteData);
 
-  // Update user profile
-  updateProfile: async (profileData) => {
-    return apiRequest('/profile', {
-      method: 'PUT',
-      body: JSON.stringify(profileData),
-    });
-  },
-};
+// ============== LOAN APPLICATIONS ==============
+export const submitApplication = (applicationData) => Api.post("/applications", applicationData);
+export const getMyApplications = () => Api.get("/applications/my");
+export const getApplicationById = (id) => Api.get(`/applications/${id}`);
 
-// ==================== LOAN SERVICES API ====================
-export const loanServicesAPI = {
-  // Get all loan services
-  getAllServices: async () => {
-    return apiRequest('/loans', {
-      method: 'GET',
-    });
-  },
+// ============== ADMIN ==============
+export const getAllApplications = () => Api.get("/admin/applications");
+export const updateApplicationStatus = (id, statusData) => Api.put(`/admin/applications/${id}/status`, statusData);
+export const getDashboardStats = () => Api.get("/admin/dashboard");
 
-  // Get loan service by ID
-  getServiceById: async (id) => {
-    return apiRequest(`/loans/${id}`, {
-      method: 'GET',
-    });
-  },
-};
+// ============== USERS (ADMIN) ==============
+export const getAllUsers = (params) => Api.get("/admin/users", { params });
+export const getUserById = (id) => Api.get(`/admin/users/${id}`);
 
-// ==================== CONTACT API ====================
-export const contactAPI = {
-  // Submit contact form
-  submitContact: async (contactData) => {
-    return apiRequest('/contact', {
-      method: 'POST',
-      body: JSON.stringify(contactData),
-    });
-  },
-};
+// ============== LOANS (ADMIN) ==============
+export const createLoan = (loanData) => Api.post("/admin/loans", loanData);
+export const updateLoan = (id, loanData) => Api.put(`/admin/loans/${id}`, loanData);
+export const deleteLoan = (id) => Api.delete(`/admin/loans/${id}`);
+export const toggleLoanStatus = (id, isActive) => Api.patch(`/admin/loans/${id}/status`, { isActive });
 
-// ==================== LOAN QUOTE API ====================
-export const loanQuoteAPI = {
-  // Request loan quote
-  requestQuote: async (quoteData) => {
-    return apiRequest('/quotes', {
-      method: 'POST',
-      body: JSON.stringify(quoteData),
-    });
-  },
-};
+// ============== QUOTES (ADMIN) ==============
+export const getAllQuotes = (params) => Api.get("/quotes", { params });
+export const updateQuoteStatus = (id, status) => Api.patch(`/quotes/${id}/status`, { status });
+export const deleteQuote = (id) => Api.delete(`/quotes/${id}`);
 
-// ==================== LOAN APPLICATIONS API ====================
-export const loanApplicationAPI = {
-  // Submit loan application
-  submitApplication: async (applicationData) => {
-    return apiRequest('/applications', {
-      method: 'POST',
-      body: JSON.stringify(applicationData),
-    });
-  },
+// ============== CONTACTS (ADMIN) ==============
+export const getAllContacts = () => Api.get("/contact");
+export const deleteContact = (id) => Api.delete(`/contact/${id}`);
 
-  // Get my applications
-  getMyApplications: async () => {
-    return apiRequest('/applications/my', {
-      method: 'GET',
-    });
-  },
-
-  // Get application by ID
-  getApplicationById: async (id) => {
-    return apiRequest(`/applications/${id}`, {
-      method: 'GET',
-    });
-  },
-};
-
-// ==================== ADMIN API (For Admin Users) ====================
-export const adminAPI = {
-  // Get all applications (Admin only)
-  getAllApplications: async () => {
-    return apiRequest('/admin/applications', {
-      method: 'GET',
-    });
-  },
-
-  // Update application status (Admin only)
-  updateApplicationStatus: async (id, statusData) => {
-    return apiRequest(`/admin/applications/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify(statusData),
-    });
-  },
-
-  // Get dashboard stats (Admin only)
-  getDashboardStats: async () => {
-    return apiRequest('/admin/dashboard', {
-      method: 'GET',
-    });
-  },
-};
-
-export default {
-  auth: authAPI,
-  profile: profileAPI,
-  loanServices: loanServicesAPI,
-  contact: contactAPI,
-  loanQuote: loanQuoteAPI,
-  loanApplication: loanApplicationAPI,
-  admin: adminAPI,
-};
+export default Api;
